@@ -3,100 +3,70 @@
         "timestamp": "2012-07-30 17:35:00", 
         "album_name": "All About The Scrilions", 
         "track_name": "This Is Definitely Not The 405", 
-        "image": {
-            "#text": "http://userserve-ak.last.fm/serve/34s/47450983.jpg", 
-            "size": "small"
-        }, 
+        "image": "http://userserve-ak.last.fm/serve/34s/47450983.jpg", 
         "artist_name": "Super Mash Bros."
     }, 
     {
         "timestamp": "2012-07-30 17:33:00", 
         "album_name": "All About The Scrilions", 
         "track_name": "NPH FTW", 
-        "image": {
-            "#text": "http://userserve-ak.last.fm/serve/34s/47450983.jpg", 
-            "size": "small"
-        }, 
+        "image": "http://userserve-ak.last.fm/serve/34s/47450983.jpg", 
         "artist_name": "Super Mash Bros."
     }, 
     {
         "timestamp": "2012-07-30 17:30:00", 
         "album_name": "Fuck Bitches. Get Euros.", 
         "track_name": "Stop That Booty (Here We Come)", 
-        "image": {
-            "#text": "http://userserve-ak.last.fm/serve/34s/26263265.jpg", 
-            "size": "small"
-        }, 
+        "image": "http://userserve-ak.last.fm/serve/34s/26263265.jpg", 
         "artist_name": "Super Mash Bros."
     }, 
     {
         "timestamp": "2012-07-30 17:26:00", 
         "album_name": "Undertow", 
         "track_name": "Bottom", 
-        "image": {
-            "#text": "http://userserve-ak.last.fm/serve/34s/67659606.png", 
-            "size": "small"
-        }, 
+        "image": "http://userserve-ak.last.fm/serve/34s/67659606.png", 
         "artist_name": "Tool"
     }, 
     {
         "timestamp": "2012-07-30 17:21:00", 
         "album_name": "The Beatles", 
         "track_name": "Day Tripper", 
-        "image": {
-            "#text": "http://userserve-ak.last.fm/serve/34s/77611972.png", 
-            "size": "small"
-        }, 
+        "image": "http://userserve-ak.last.fm/serve/34s/77611972.png", 
         "artist_name": "The Beatles"
     }, 
     {
         "timestamp": "2012-07-30 17:18:00", 
         "album_name": "David Gates & Bread Essentials", 
         "track_name": "The Guitar Man", 
-        "image": {
-            "#text": "http://images.amazon.com/images/P/B000025RRB.01._SCMZZZZZZZ_.jpg", 
-            "size": "small"
-        }, 
+        "image": "http://images.amazon.com/images/P/B000025RRB.01._SCMZZZZZZZ_.jpg", 
         "artist_name": "Bread"
     }, 
     {
         "timestamp": "2012-07-30 17:14:00", 
         "album_name": "40 Oz. to Freedom", 
         "track_name": "Badfish", 
-        "image": {
-            "#text": "http://images.amazon.com/images/P/B000002P22.01.THUMBZZZ.jpg", 
-            "size": "small"
-        }, 
+        "image": "http://images.amazon.com/images/P/B000002P22.01.THUMBZZZ.jpg", 
         "artist_name": "Sublime"
     }, 
     {
         "timestamp": "2012-07-30 17:09:00", 
         "album_name": "Rubber Factory", 
         "track_name": "When The Lights Go Out", 
-        "image": {
-            "#text": "http://userserve-ak.last.fm/serve/34s/80506183.png", 
-            "size": "small"
-        }, 
+        "image": "http://userserve-ak.last.fm/serve/34s/80506183.png", 
         "artist_name": "The Black Keys"
     }, 
     {
         "timestamp": "2012-07-30 17:06:00", 
         "album_name": "The Scenic Route", 
         "track_name": "Outro", 
-        "image": {
-            "#text": "http://userserve-ak.last.fm/serve/34s/32569789.jpg", 
-            "size": "small"
-        }, 
+        "image": "http://userserve-ak.last.fm/serve/34s/32569789.jpg", 
         "artist_name": "Panacea"
     }, 
     {
         "timestamp": "2012-07-30 16:52:00", 
         "album_name": "Mule Variations", 
         "track_name": "Chocolate Jesus", 
-        "image": {
-            "#text": "http://userserve-ak.last.fm/serve/34s/64659639.png", 
-            "size": "small"
-        }, 
+        "image": "http://userserve-ak.last.fm/serve/34s/64659639.png", 
         "artist_name": "Tom Waits"
     }
 ]

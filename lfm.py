@@ -63,7 +63,7 @@ class LFMPy:
                             "track_name" : tracks["name"],
                             "artist_name" : tracks["artist"]["#text"],
                             "album_name" : tracks["album"]["#text"],
-                            "image" : tracks["image"]["#text"][0]}
+                            "image" : tracks["image"][0]["#text"]}
                             )
 
       output_file.write(json.dumps(output_list, indent=4))
