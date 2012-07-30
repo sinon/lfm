@@ -90,8 +90,14 @@ if __name__ == "__main__":
    check time of last track, convert time to UNIX time stamp format
    """
    if os.path.exists(filename):
-           date_line = linecache.getline(filename, 2)
-           #last_access = calendar.timegm(date_line)
+      file_in = open(filename, 'r')
+      file_in = json.loads(file_in.read())
+
+      last_access_date = dateutil.parser.parse(file_in[0]["timestamp"])
+      last_access = str(calendar.timegm(last_access_date.utctimetuple()))
+
+      first_access_date = dateutil.parser.parse(file_in[-1]["timestamp"])
+      first_access = str(calendar.timegm(first_access_date.utctimetuple()))
    else:
       open(filename,'w').close()
       last_access = "0"
