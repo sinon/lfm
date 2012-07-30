@@ -68,6 +68,10 @@ class LFMPy:
 
       output_file.write(json.dumps(output_list, indent=4))
 
+      #Return the datetime of first/last track received
+      #To be used on subsequent runs of get_recent_tracks
+      return (output_list[0]["timestamp"],output_list[-1]["timestamp"])
+
          
 if __name__ == "__main__":
    username = "docmatrix"
