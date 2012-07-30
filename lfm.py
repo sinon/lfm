@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import urllib, urllib2
@@ -52,19 +53,20 @@ class LFMPy:
       """
       Open file append response to start of the file
       """
+
       output_file = codecs.open(filename, 'w', "utf-8")
-          
+      output_list = []    
       for tracks in response_data["recenttracks"]["track"]:
          if tracks.has_key('nowplaying'):
             continue
-         output_file.write("{ \n")
-         output_file.write("   \"timestamp\": " +
-                            str(dateutil.parser.parse(tracks["date"]["#text"])) + "\",\n")
-         output_file.write("   \"track_name\": \"" + tracks["name"] + "\",\n")
-         output_file.write("   \"artist_name\": \"" + tracks["artist"]["#text"] + "\",\n")
-         output_file.write("   \"album_name\": \"" + tracks["album"]["#text"] + "\",\n")
-         output_file.write("   \"image\": \"" + tracks["image"][0]["#text"] + "\"\n")
-         output_file.write("}, \n")
+         output_list.append({"timestamp" : str(dateutil.parser.parse(tracks["date"]["#text"])),
+                            "track_name" : tracks["name"],
+                            "artist_name" : tracks["artist"]["#text"],
+                            "album_name" : tracks["album"]["#text"],
+                            "image" : tracks["image"][0]}
+                            )
+
+      output_file.write(json.dumps(output_list, indent=4))
 
          
 if __name__ == "__main__":
