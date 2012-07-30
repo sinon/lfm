@@ -14,7 +14,7 @@ import codecs
 
 class LFMPy:
 
-   def __init__(self, username="robz88", filename="output.txt"):
+   def __init__(self, username="docmatrix", filename="output.txt"):
       self.LFM_URL = "http://ws.audioscrobbler.com/2.0/?"
       self.API_KEY = "4b9024f7f463c51f13960fe5cedebab9"
       self.username = username
@@ -25,7 +25,7 @@ class LFMPy:
    Craft the last api request using command line arguments and details from file
    """
    def send_request(self, args, **kwargs):
-      #load supplied argsuments
+      #load supplied arguments
       kwargs.update(args)
 
       #add default args
@@ -48,18 +48,19 @@ class LFMPy:
                "user" : username,
                "from" : last_access,
                "to" : first_track}
-      
+
       response_data = self.send_request(args)
       """
       Open file append response to start of the file
       """
 
       output_file = codecs.open(filename, 'w', "utf-8")
-      output_list = []    
+      output_list = []
       for tracks in response_data["recenttracks"]["track"]:
-         if tracks.has_key('nowplaying'):
+         if tracks.has_key("@attr"):
             continue
-         output_list.append({"timestamp" : str(dateutil.parser.parse(tracks["date"]["#text"])),
+         output_list.append({"timestamp" :
+                        str(dateutil.parser.parse(tracks["date"]["#text"])),
                             "track_name" : tracks["name"],
                             "artist_name" : tracks["artist"]["#text"],
                             "album_name" : tracks["album"]["#text"],
@@ -72,7 +73,7 @@ class LFMPy:
       #To be used on subsequent runs of get_recent_tracks
       return (output_list[0]["timestamp"],output_list[-1]["timestamp"])
 
-         
+
 if __name__ == "__main__":
    username = "docmatrix"
    filename = "output.txt"
@@ -80,9 +81,9 @@ if __name__ == "__main__":
    """
    Take in the command line parameters
    """
-   if(len(sys.argv) != 3):
-      print """Program requires 2 command line arguments 
-                           arg1 Lastfm username eg. docmatrix 
+   if (len(sys.argv) != 3):
+      print """Program requires 2 command line arguments
+                           arg1 Lastfm username eg. docmatrix
                            arg2 Filename to store results"""
    else:
       username = sys.argv[1]
@@ -93,7 +94,9 @@ if __name__ == "__main__":
    If the file passed to the script exists, open it, parse json structure,
    check time of last track, convert time to UNIX time stamp format
    """
-   if os.path.exists(filename):
+   if (os.path.exists(filename) and
+       linecache.getline(filename, 1) is "[" and
+       linecache.getline(filename, -1) is "]"):
       file_in = open(filename, 'r')
       file_in = json.loads(file_in.read())
 
@@ -102,9 +105,11 @@ if __name__ == "__main__":
 
       first_access_date = dateutil.parser.parse(file_in[-1]["timestamp"])
       first_access = str(calendar.timegm(first_access_date.utctimetuple()))
+   #If file does not exist, create it and set first/last values accordingly 
    else:
       open(filename,'w').close()
       last_access = "0"
+      first_access = "0"
 
    lastfm_request = LFMPy(username,filename)
-   lastfm_request.get_recent_tracks()
+   datetime_tuple = lastfm_request.get_recent_tracks()
