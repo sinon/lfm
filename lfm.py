@@ -54,7 +54,7 @@ class LFMPy:
       Open file append response to start of the file
       """
 
-      output_file = codecs.open(filename, 'w', "utf-8")
+      #output_file = codecs.open(filename, 'w', "utf-8")
       output_list = []
       for tracks in response_data["recenttracks"]["track"]:
          if tracks.has_key("@attr"):
@@ -67,11 +67,12 @@ class LFMPy:
                             "image" : tracks["image"][0]["#text"]}
                             )
 
-      output_file.write(json.dumps(output_list, indent=4))
+      #output_file.write(json.dumps(output_list, indent=4)).close()
 
       #Return the datetime of first/last track received
       #To be used on subsequent runs of get_recent_tracks
-      return (output_list[0]["timestamp"],output_list[-1]["timestamp"])
+      #return (output_list[0]["timestamp"],output_list[-1]["timestamp"])
+      return output_list
 
 
 if __name__ == "__main__":
@@ -95,8 +96,8 @@ if __name__ == "__main__":
    check time of last track, convert time to UNIX time stamp format
    """
    if (os.path.exists(filename) and
-       linecache.getline(filename, 1) is "[" and
-       linecache.getline(filename, -1) is "]"):
+      linecache.getline(filename, 1) is "[" and
+      linecache.getline(filename, -1) is "]"):
       file_in = open(filename, 'r')
       file_in = json.loads(file_in.read())
 
@@ -108,8 +109,24 @@ if __name__ == "__main__":
    #If file does not exist, create it and set first/last values accordingly 
    else:
       open(filename,'w').close()
+      first_run = True
       last_access = "0"
       first_access = "0"
 
    lastfm_request = LFMPy(username,filename)
-   datetime_tuple = lastfm_request.get_recent_tracks()
+   #datetime_tuple = lastfm_request.get_recent_tracks()
+
+   #last_access = from first_track = to
+   output_list = []
+   #If it is the programs first run retrieve results 5 times and store in list
+   if first_run:
+      for x inrange(5):
+         output_list.append(lastfm_request.get_recent_tracks("0",to_date))
+         to_date = str(calendar.timegm(output_list[-1]["timestamp"])
+
+
+   output_file = codecs.open(filename, 'w', "utf-8")
+   output_file.write(json.dumps(output_list, indent=4)).close()
+
+
+      
