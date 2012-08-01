@@ -17,7 +17,6 @@ class LFMPy:
       self.username = username
       self.filename  = filename
 
-
    """
    Craft the last api request using command line arguments and details from file
    """
@@ -124,8 +123,6 @@ Continuing execution of program as if it was a first run."""
       first_run = True
       last_access = "0"
       first_access = "0"
-
-
 
    lastfm_request = LFMPy(username,filename)
 
