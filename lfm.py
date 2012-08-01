@@ -51,11 +51,16 @@ class LFMPy:
       Open file append response to start of the file
       """
 
-      #output_file = codecs.open(filename, 'w', "utf-8")
       output_list = []
       for tracks in response_data["recenttracks"]["track"]:
-         if tracks.has_key("@attr"):
-            continue
+##         try:
+##            if tracks["@attr"].has_key("nowplaying"):
+##               continue
+##         except KeyError, e:
+##            continue
+##         except TypeError, e:
+##            continue
+
          output_list.append({"timestamp" :
                         str(dateutil.parser.parse(tracks["date"]["#text"])),
                             "track_name" : tracks["name"],
@@ -64,17 +69,16 @@ class LFMPy:
                             "image" : tracks["image"][0]["#text"]}
                             )
 
-      #output_file.write(json.dumps(output_list, indent=4)).close()
 
       #Return the datetime of first/last track received
       #To be used on subsequent runs of get_recent_tracks
-      #return (output_list[0]["timestamp"],output_list[-1]["timestamp"])
       return output_list
 
 
 if __name__ == "__main__":
    username = "docmatrix"
    filename = "output.txt"
+   json_list = []
 
    """
    Take in the command line parameters
@@ -92,69 +96,77 @@ if __name__ == "__main__":
    If the file passed to the script exists, open it, parse json structure,
    check time of last track, convert time to UNIX time stamp format
    """
-   if (os.path.exists(filename) and
-      linecache.getline(filename, 1) is "[" and
-      linecache.getline(filename, -1) is "]"):
+   if (os.path.exists(filename)):
+      print "Output file already exists appending tracks to given file."
       file_in = open(filename, 'r')
-      file_in_json = json.loads(file_in.read())
+      file_in_str = file_in.read()
+      json_list = json.loads(file_in_str)
 
-      last_access_date = dateutil.parser.parse(file_in_json[0]["timestamp"])
+      last_access_date = dateutil.parser.parse(json_list[0]["timestamp"])
       last_access = str(calendar.timegm(last_access_date.utctimetuple()))
 
-      first_access_date = dateutil.parser.parse(file_in_json[-1]["timestamp"])
+      first_access_date = dateutil.parser.parse(json_list[-1]["timestamp"])
       first_access = str(calendar.timegm(first_access_date.utctimetuple()))
 
       first_run = False
    #If file does not exist, create it and set first/last values accordingly 
    else:
+      print "New output file specified creating file"
       open(filename,'w').close()
       first_run = True
       last_access = "0"
       first_access = "0"
 
    lastfm_request = LFMPy(username,filename)
-   #datetime_tuple = lastfm_request.get_recent_tracks()
 
    #last_access = from first_track = to
    output_list = []
    #If it is the programs first run retrieve results 5 times and store in list
    if first_run:
       to_date = "0"
+      print "Querying LastFm API and writing results to file"
       for x in range(5):
          output_list.extend(lastfm_request.get_recent_tracks("0",to_date))
          to_str = dateutil.parser.parse(output_list[-1]["timestamp"])
          to_date = str(calendar.timegm(to_str.utctimetuple()))
          
-         output_file = codecs.open(filename, 'w', "utf-8")
-         output_file.write(json.dumps(output_list, indent=4))
-         output_file.close()
+      #Write results to file
+      print "Writing %d track details to file" % len(output_list)
+      output_file = codecs.open(filename, 'w', "utf-8")
+      output_file.write(json.dumps(output_list, indent=4))
+      output_file.close()
 
          
    #If we already have results stored retrieve newer tracks then older
    else:
+      print "Querying LastFm API and writing results to file"
       #Grab newer tracks
       output_list.extend(lastfm_request.get_recent_tracks(last_access,"0"))
 
-      output_file = codecs.open(filename, 'a', "utf-8")
-      output_file.seek(0)
-      output_file.write(json.dumps(output_list, indent=4))
-      output_file.close()
+      print "Adding new %d track details to beginning of file" % len(output_list)
+
+      #Prepend output_list to json_list then reset output_list
+      json_list = output_list + json_list
       output_list = []
+
 
       #Grab older tracks
       for x in range(4):
-         output_list.extend(last_fm_request.get_recent_tracks("0",first_access))
+         output_list.extend(lastfm_request.get_recent_tracks("0",first_access))
+
+         
          from_str = dateutil.parser.parse(output_list[-1]["timestamp"])
          first_access = str(calendar.timegm(from_str.utctimetuple()))
 
-         output_file = codecs.open(filename, 'a', "utf-8")
-         output_file.seek(0)
-         output_file.write(json.dumps(output_list, indent=4))
-         output_file.close()
-      
-      
+      #Append output_list to json_list
+      print "Adding %d older track details to end of file" % len(output_list)
+      json_list = json_list + output_list
 
-
+      
+      #Write json_list to file
+      output_file = codecs.open(filename, 'w', "utf-8")
+      output_file.write(json.dumps(json_list, indent=4))
+      output_file.close()
 
 
 
