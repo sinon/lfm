@@ -2,13 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import urllib, urllib2
-import sys
+import sys, os
 import json
 import linecache
-import datetime
-import calendar
-import os
-import dateutil.parser
+import dateutil.parser, calendar, datetime
 import collections
 import codecs
 
@@ -99,13 +96,15 @@ if __name__ == "__main__":
       linecache.getline(filename, 1) is "[" and
       linecache.getline(filename, -1) is "]"):
       file_in = open(filename, 'r')
-      file_in = json.loads(file_in.read())
+      file_in_json = json.loads(file_in.read())
 
-      last_access_date = dateutil.parser.parse(file_in[0]["timestamp"])
+      last_access_date = dateutil.parser.parse(file_in_json[0]["timestamp"])
       last_access = str(calendar.timegm(last_access_date.utctimetuple()))
 
-      first_access_date = dateutil.parser.parse(file_in[-1]["timestamp"])
+      first_access_date = dateutil.parser.parse(file_in_json[-1]["timestamp"])
       first_access = str(calendar.timegm(first_access_date.utctimetuple()))
+
+      first_run = False
    #If file does not exist, create it and set first/last values accordingly 
    else:
       open(filename,'w').close()
@@ -120,13 +119,43 @@ if __name__ == "__main__":
    output_list = []
    #If it is the programs first run retrieve results 5 times and store in list
    if first_run:
-      for x inrange(5):
-         output_list.append(lastfm_request.get_recent_tracks("0",to_date))
-         to_date = str(calendar.timegm(output_list[-1]["timestamp"])
+      to_date = "0"
+      for x in range(5):
+         output_list.extend(lastfm_request.get_recent_tracks("0",to_date))
+         to_str = dateutil.parser.parse(output_list[-1]["timestamp"])
+         to_date = str(calendar.timegm(to_str.utctimetuple()))
+         
+         output_file = codecs.open(filename, 'w', "utf-8")
+         output_file.write(json.dumps(output_list, indent=4))
+         output_file.close()
+
+         
+   #If we already have results stored retrieve newer tracks then older
+   else:
+      #Grab newer tracks
+      output_list.extend(lastfm_request.get_recent_tracks(last_access,"0"))
+
+      output_file = codecs.open(filename, 'a', "utf-8")
+      output_file.seek(0)
+      output_file.write(json.dumps(output_list, indent=4))
+      output_file.close()
+      output_list = []
+
+      #Grab older tracks
+      for x in range(4):
+         output_list.extend(last_fm_request.get_recent_tracks("0",first_access))
+         from_str = dateutil.parser.parse(output_list[-1]["timestamp"])
+         first_access = str(calendar.timegm(from_str.utctimetuple()))
+
+         output_file = codecs.open(filename, 'a', "utf-8")
+         output_file.seek(0)
+         output_file.write(json.dumps(output_list, indent=4))
+         output_file.close()
+      
+      
 
 
-   output_file = codecs.open(filename, 'w', "utf-8")
-   output_file.write(json.dumps(output_list, indent=4)).close()
+
 
 
       
