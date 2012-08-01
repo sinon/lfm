@@ -47,19 +47,20 @@ class LFMPy:
                "to" : first_track}
 
       response_data = self.send_request(args)
+      print response_data
       """
       Open file append response to start of the file
       """
 
       output_list = []
       for tracks in response_data["recenttracks"]["track"]:
-##         try:
-##            if tracks["@attr"].has_key("nowplaying"):
-##               continue
-##         except KeyError, e:
-##            continue
-##         except TypeError, e:
-##            continue
+         try:
+            if tracks["@attr"].has_key("nowplaying"):
+               continue
+         except KeyError, e:
+            continue
+         except TypeError, e:
+            continue
 
          output_list.append({"timestamp" :
                         str(dateutil.parser.parse(tracks["date"]["#text"])),
@@ -100,15 +101,22 @@ if __name__ == "__main__":
       print "Output file already exists appending tracks to given file."
       file_in = open(filename, 'r')
       file_in_str = file_in.read()
-      json_list = json.loads(file_in_str)
 
-      last_access_date = dateutil.parser.parse(json_list[0]["timestamp"])
-      last_access = str(calendar.timegm(last_access_date.utctimetuple()))
+      try:
+         json_list = json.loads(file_in_str)
 
-      first_access_date = dateutil.parser.parse(json_list[-1]["timestamp"])
-      first_access = str(calendar.timegm(first_access_date.utctimetuple()))
+      except ValueError, e:
+         print """File specified exists but does not contain valid JSON.
+Continuing execution of program as if it was a first run."""
+         first_run = True
+      else:
+         last_access_date = dateutil.parser.parse(json_list[0]["timestamp"])
+         last_access = str(calendar.timegm(last_access_date.utctimetuple()))
 
-      first_run = False
+         first_access_date = dateutil.parser.parse(json_list[-1]["timestamp"])
+         first_access = str(calendar.timegm(first_access_date.utctimetuple()))
+         first_run = False
+      
    #If file does not exist, create it and set first/last values accordingly 
    else:
       print "New output file specified creating file"
@@ -116,6 +124,8 @@ if __name__ == "__main__":
       first_run = True
       last_access = "0"
       first_access = "0"
+
+
 
    lastfm_request = LFMPy(username,filename)
 
