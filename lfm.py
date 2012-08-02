@@ -51,6 +51,7 @@ class LFMPy:
 
       try:
          params = self.LFM_URL + urllib.urlencode(kwargs)
+
          data = urllib2.urlopen(params)
 
          response_data = json.load(data)
@@ -80,15 +81,22 @@ class LFMPy:
          first_track -- the oldest track currently in file
 
          Returns:
-         output_list: A list of dictionaries
+         Tuple containing:
+            output_list: A list of dictionaries
 
-            each dictionary encapsulates 1 track and it's relevant data
-                  -- timestamp
-                  -- track_name
-                  -- artist_name
-                  -- album_name
-                  -- image
+               each dictionary encapsulates 1 track and it's relevant data
+                     -- timestamp
+                     -- track_name
+                     -- artist_name
+                     -- album_name
+                     -- image
+            total_pages: the number of pages from that time period
+            This is used in the case of new tracks to be added, so that
+            all new tracks are added to data. To prevent fragmentation
+            within data file.
+                  
       """
+      
       args = { "method" : "user.getrecenttracks",
                "user" : username,
                "from" : last_track,
@@ -97,8 +105,20 @@ class LFMPy:
       #Send a lastfm api request with given arguments
       response_data = self.send_request(args)
 
-      output_list = []
-      
+      return_list = []
+
+      total_pages = int(response_data["recenttracks"]["@attr"]["totalPages"])
+
+      if int(response_data["recenttracks"]["@attr"]["total"]) == 1:
+         tmp_dict = { "timestamp" :
+            str(dateutil.parser.parse(response_data["recenttracks"]["track"]["date"]["#text"])),
+                      "track_name": response_data["recenttracks"]["track"]["name"],
+                     "artist_name" : response_data["recenttracks"]["track"]["artist"]["#text"],
+                     "album_name" : response_data["recenttracks"]["track"]["album"]["#text"],
+                      "image" : response_data["recenttracks"]["track"]["image"][0]["#text"]
+            }
+         return ([tmp_dict],total_pages)
+
       """Enumerate over the json structure extracting the relevant data
       and storing it in in output_list structure which when finished will
       contain a list of dictionaries"""
@@ -113,16 +133,17 @@ class LFMPy:
          else:
             print "Problem reading date from server response"
             print tracks
+            date_str = "ERROR"
 
-         output_list.append({"timestamp" : date_str,
+         return_list.append({"timestamp" : date_str,
                             "track_name" : tracks["name"],
                             "artist_name" : tracks["artist"]["#text"],
                             "album_name" : tracks["album"]["#text"],
                             "image" : tracks["image"][0]["#text"]}
                             )
 
-      #Return the list/json structure
-      return output_list
+      #Return the list/json structure and total pages remaining in query
+      return return_list,total_pages
 
 
 if __name__ == "__main__":
@@ -132,6 +153,10 @@ if __name__ == "__main__":
 
    """
    Take in the command line parameters
+      arg1 -- last.fm username
+      arg2 -- filename for data to be outputted to
+
+   If none specified use defaults for testing purposes
    """
    if (len(sys.argv) != 3):
       print """Program requires 2 command line arguments
@@ -155,15 +180,16 @@ if __name__ == "__main__":
          json_list = json.loads(file_in_str)
 
       except ValueError, e:
-         print """File specified exists but does not contain valid JSON. 
-            Continuing execution of program as if it was a first run."""
+         print "File specified exists but does not contain valid JSON. \n" \
+            "Continuing execution of program as if it was a first run."
          first_run = True
       else:
          last_access_date = dateutil.parser.parse(json_list[0]["timestamp"])
          last_access = str(calendar.timegm(last_access_date.utctimetuple()))
 
          first_access_date = dateutil.parser.parse(json_list[-1]["timestamp"])
-         first_access = str(calendar.timegm(first_access_date.utctimetuple()))
+         first_access = str(calendar.timegm(first_access_date.utctimetuple()))         
+         
          first_run = False
       
    #If file does not exist, create it and set first/last values accordingly 
@@ -184,7 +210,8 @@ if __name__ == "__main__":
       to_date = "0"
       print "Querying LastFm API and writing results to file"
       for x in range(5):
-         output_list.extend(lastfm_request.get_recent_tracks("0",to_date))
+         (tmp_list, _)= lastfm_request.get_recent_tracks("0", to_date) 
+         output_list.extend(tmp_list)
          to_str = dateutil.parser.parse(output_list[-1]["timestamp"])
          to_date = str(calendar.timegm(to_str.utctimetuple()))
          
@@ -198,9 +225,24 @@ if __name__ == "__main__":
    #If we already have results stored retrieve newer tracks then older
    else:
       print "Querying LastFm API and writing results to file"
+
       #Grab newer tracks
       current_time = str(int(time.time()))
-      output_list.extend(lastfm_request.get_recent_tracks(last_access,current_time))
+
+      #Query once to retrieve first group of results and number of remaining result pages
+      (tmp_list,page_count) = lastfm_request.get_recent_tracks(last_access, current_time)
+      tmp_time = dateutil.parser.parse(tmp_list[-1]["timestamp"])
+      current_time = str(calendar.timegm(tmp_time.utctimetuple()))
+      output_list.extend(tmp_list)
+      tmp_list = []
+
+      
+      for x in range(page_count-1):
+         (tmp_list,_) = lastfm_request.get_recent_tracks(last_access, current_time)
+         current_time = str(dateutil.parser.parse(tmp_list[-1]["timestamp"]))
+         output_list.extend(tmp_list)
+         tmp_list = []
+         
 
       print "Adding new %d track details to beginning of file" % len(output_list)
 
@@ -209,10 +251,11 @@ if __name__ == "__main__":
       output_list = []
 
 
-      #Grab older tracks
-      for x in range(4):
-         output_list.extend(lastfm_request.get_recent_tracks("0",first_access))
-
+      #Grab older tracks range is reduced if more pages of new tracks were retrieved
+      #To stay within limit of 5 queries per script execution
+      for x in range(4-page_count):
+         (tmp_list, _) = lastfm_request.get_recent_tracks("0",first_access)
+         output_list.extend(tmp_list)
          
          from_str = dateutil.parser.parse(output_list[-1]["timestamp"])
          first_access = str(calendar.timegm(from_str.utctimetuple()))
