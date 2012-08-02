@@ -12,6 +12,19 @@ import codecs
 class LFMPy:
 
    def __init__(self, username="docmatrix", filename="output.txt"):
+      """Initialisation function for LFMPy
+
+      Arguments:
+      username -- the username whose profile is to be quried
+         defaults to docmatrix for testing purposees
+      filename -- the output file where returned data is to be stored
+         defaults to output.txt for testing purposes
+
+      Constants:
+      LFM_URL -- url of the lastfm api
+      API_KEY -- the api_key used for the programs queries
+
+      """
       self.LFM_URL = "http://ws.audioscrobbler.com/2.0/?"
       self.API_KEY = "4b9024f7f463c51f13960fe5cedebab9"
       self.username = username
@@ -24,6 +37,9 @@ class LFMPy:
          Keyword arguments:
          args -- list of arguments to be used in request
          **kwargs -- unpacked dictionary
+
+         Returns:
+         reponse_data -- json formatted response from the lastfm API
       """
 
       #load supplied arguments
@@ -41,6 +57,7 @@ class LFMPy:
          data.close()
 
          return response_data
+
       except urllib2.HTTPError, e:
          print "HTTP error: %d" % e.code
          sys.exit(1)
@@ -61,16 +78,30 @@ class LFMPy:
          Keyword arguments:
          last_track -- the newest track currently in file
          first_track -- the oldest track currently in file
+
+         Returns:
+         output_list: A list of dictionaries
+
+            each dictionary encapsulates 1 track and it's relevant data
+                  -- timestamp
+                  -- track_name
+                  -- artist_name
+                  -- album_name
+                  -- image
       """
       args = { "method" : "user.getrecenttracks",
                "user" : username,
                "from" : last_track,
                "to" : first_track}
 
+      #Send a lastfm api request with given arguments
       response_data = self.send_request(args)
 
       output_list = []
       
+      """Enumerate over the json structure extracting the relevant data
+      and storing it in in output_list structure which when finished will
+      contain a list of dictionaries"""
       for tracks in response_data["recenttracks"]["track"]:
          #Skip nowplaying track
          if '@attr' in tracks and 'nowplaying' in tracks['@attr']:
