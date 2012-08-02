@@ -5,7 +5,7 @@ import urllib, urllib2
 import sys, os
 import json
 import linecache
-import dateutil.parser, calendar, datetime
+import dateutil.parser, calendar, datetime, time
 import collections
 import codecs
 
@@ -17,61 +17,80 @@ class LFMPy:
       self.username = username
       self.filename  = filename
 
-   """
-   Craft the last api request using command line arguments and details from file
-   """
+
    def send_request(self, args, **kwargs):
+      """Function to craft and send api request to lastfm.
+
+         Keyword arguments:
+         args -- list of arguments to be used in request
+         **kwargs -- unpacked dictionary
+      """
+
       #load supplied arguments
       kwargs.update(args)
 
-      #add default args
+      #add default arguments
       kwargs.update({"api_key" : self.API_KEY,
                      "format" : "json"})
 
       try:
          params = self.LFM_URL + urllib.urlencode(kwargs)
          data = urllib2.urlopen(params)
+
          response_data = json.load(data)
          data.close()
+
          return response_data
       except urllib2.HTTPError, e:
          print "HTTP error: %d" % e.code
+         sys.exit(1)
       except urllib2.URLError, e:
          print "Network error: %s" % e.reason.args[1]
+         sys.exit(1)
+   
+   def get_recent_tracks(self, last_track="0", first_track="0"):
+      """Function to request the recently played tracks from lastfm API
+         within the given time period constraint of to/from used by the
+         lastfm api.
 
-   def get_recent_tracks(self, last_access="0", first_track="0"):
+         When we are requesting newer tracks it will be:
+            from:last_track   ->    to: time now
+         When we are requesting older tracks it will be:
+            from: "0"         ->    to: last_track
+
+         Keyword arguments:
+         last_track -- the newest track currently in file
+         first_track -- the oldest track currently in file
+      """
       args = { "method" : "user.getrecenttracks",
                "user" : username,
-               "from" : last_access,
+               "from" : last_track,
                "to" : first_track}
 
       response_data = self.send_request(args)
-      print response_data
-      """
-      Open file append response to start of the file
-      """
 
       output_list = []
+      
       for tracks in response_data["recenttracks"]["track"]:
-         try:
-            if tracks["@attr"].has_key("nowplaying"):
-               continue
-         except KeyError, e:
-            continue
-         except TypeError, e:
+         #Skip nowplaying track
+         if '@attr' in tracks and 'nowplaying' in tracks['@attr']:
+            print "Skipping now playing"
             continue
 
-         output_list.append({"timestamp" :
-                        str(dateutil.parser.parse(tracks["date"]["#text"])),
+         if 'date' in tracks and '#text' in tracks['date']:
+            date_str = str(dateutil.parser.parse(tracks["date"]["#text"]))
+         else:
+            print "Problem reading date from server response"
+            print tracks
+
+         output_list.append({"timestamp" : date_str,
                             "track_name" : tracks["name"],
                             "artist_name" : tracks["artist"]["#text"],
                             "album_name" : tracks["album"]["#text"],
                             "image" : tracks["image"][0]["#text"]}
                             )
 
-
-      #Return the datetime of first/last track received
-      #To be used on subsequent runs of get_recent_tracks
+      #Return the list/json structure
       return output_list
 
 
@@ -94,7 +113,7 @@ if __name__ == "__main__":
 
    """
    If the file passed to the script exists, open it, parse json structure,
-   check time of last track, convert time to UNIX time stamp format
+   check time of last/first track, convert time to UNIX time stamp format
    """
    if (os.path.exists(filename)):
       print "Output file already exists appending tracks to given file."
@@ -105,8 +124,8 @@ if __name__ == "__main__":
          json_list = json.loads(file_in_str)
 
       except ValueError, e:
-         print """File specified exists but does not contain valid JSON.
-Continuing execution of program as if it was a first run."""
+         print """File specified exists but does not contain valid JSON. 
+            Continuing execution of program as if it was a first run."""
          first_run = True
       else:
          last_access_date = dateutil.parser.parse(json_list[0]["timestamp"])
@@ -124,10 +143,11 @@ Continuing execution of program as if it was a first run."""
       last_access = "0"
       first_access = "0"
 
+
    lastfm_request = LFMPy(username,filename)
 
-   #last_access = from first_track = to
    output_list = []
+
    #If it is the programs first run retrieve results 5 times and store in list
    if first_run:
       to_date = "0"
@@ -148,7 +168,8 @@ Continuing execution of program as if it was a first run."""
    else:
       print "Querying LastFm API and writing results to file"
       #Grab newer tracks
-      output_list.extend(lastfm_request.get_recent_tracks(last_access,"0"))
+      current_time = str(int(time.time()))
+      output_list.extend(lastfm_request.get_recent_tracks(last_access,current_time))
 
       print "Adding new %d track details to beginning of file" % len(output_list)
 
